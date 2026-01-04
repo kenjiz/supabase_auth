@@ -14,7 +14,7 @@ The app follows **Clean Architecture** principles with clear separation of conce
                     ↕
 ┌─────────────────────────────────────────────┐
 │            State Management Layer           │
-│            (Providers, State)               │
+│          (Bloc, Events, States)             │
 └─────────────────────────────────────────────┘
                     ↕
 ┌─────────────────────────────────────────────┐
@@ -38,8 +38,10 @@ lib/
 ├── models/              # Data models
 │   └── user_profile.dart # User profile model
 │
-├── providers/           # State management (Provider pattern)
-│   └── auth_provider.dart # Authentication state provider
+├── bloc/                # State management (BLoC pattern)
+│   ├── auth_bloc.dart   # Authentication bloc
+│   ├── auth_event.dart  # Authentication events
+│   └── auth_state.dart  # Authentication states
 │
 ├── services/            # Business logic and API services
 │   └── auth_service.dart  # Authentication service
@@ -112,26 +114,40 @@ bool isAuthenticated()
 UserProfile? get currentUserProfile
 ```
 
-### 4. Providers Layer (`providers/`)
+### 4. Bloc Layer (`bloc/`)
 
-**Purpose**: Manage app state and provide reactive updates to UI.
+**Purpose**: Manage app state and provide reactive updates to UI using the BLoC pattern.
 
 **Key Files**:
-- `auth_provider.dart`: Authentication state provider
+- `auth_bloc.dart`: Authentication bloc (business logic component)
+- `auth_event.dart`: Authentication events
+- `auth_state.dart`: Authentication states
 
 **Key Features**:
-- Uses `ChangeNotifier` for state changes
+- Uses `Bloc` from flutter_bloc package
 - Manages loading states
 - Handles errors
 - Provides authentication status
 - Listens to Supabase auth state changes
 
-**State Properties**:
+**Events**:
 ```dart
-UserProfile? currentUser
-bool isLoading
-bool isAuthenticated
-String? errorMessage
+AuthCheckRequested       // Check current auth status
+AuthStateChanged         // Auth state changed from Supabase
+AuthSignInWithGoogleRequested  // Initiate Google sign-in
+AuthSignOutRequested     // Sign out user
+AuthErrorCleared         // Clear error state
+```
+
+**States**:
+```dart
+AuthInitial              // Initial state
+AuthLoading              // Checking auth status
+AuthAuthenticated(user)  // User is authenticated
+AuthUnauthenticated      // User is not authenticated
+AuthSigningIn            // Sign-in in progress
+AuthSigningOut(user)     // Sign-out in progress
+AuthError(message)       // Error occurred
 ```
 
 ### 5. Screens Layer (`screens/`)
@@ -185,7 +201,7 @@ String? errorMessage
 2. Not authenticated
    → Navigate to LoginScreen
    → User clicks "Sign in with Google"
-   → AuthProvider.signInWithGoogle()
+   → AuthBloc receives AuthSignInWithGoogleRequested event
    → AuthService.signInWithGoogle()
    → Supabase OAuth flow initiated
    → Browser/WebView opens
@@ -194,8 +210,8 @@ String? errorMessage
    → Google OAuth completes
    → Deep link callback to app
    → Supabase creates session
-   → AuthProvider listens to auth state change
-   → Updates currentUser
+   → AuthBloc listens to auth state change
+   → Emits AuthAuthenticated state with user
    → LoginScreen auto-navigates to HomeScreen
    
 4. Authenticated
@@ -213,35 +229,35 @@ String? errorMessage
 ```
 UI Event (e.g., button press)
     ↓
-Provider method called
+Bloc event dispatched
     ↓
-Update loading state (isLoading = true)
+Bloc handler processes event
     ↓
-Call service method
+Update state (emit new state)
     ↓
 Service calls Supabase API
     ↓
 Handle response/error
     ↓
-Update provider state
+Emit final state
     ↓
-Notify listeners (notifyListeners())
+BlocBuilder/BlocListener receives state
     ↓
 UI rebuilds automatically
 ```
 
 ## Key Design Decisions
 
-### 1. Provider for State Management
+### 1. flutter_bloc for State Management
 
 **Why**: 
-- Lightweight and simple
-- Official Flutter recommendation
-- Easy to learn and use
-- Good for small to medium apps
-- Reactive UI updates
+- Predictable state management
+- Clear separation of business logic and UI
+- Testable and scalable
+- Industry standard for Flutter apps
+- Reactive state updates
 
-**Alternative**: Could use Riverpod or Bloc for larger apps
+**Alternative**: Could use Provider, Riverpod for simpler apps
 
 ### 2. Supabase for Backend
 
@@ -293,25 +309,26 @@ Want to add features? Here's where to start:
 
 ### Add New Authentication Provider
 1. Add method in `AuthService`
-2. Add handler in `AuthProvider`
-3. Add UI button in `LoginScreen`
+2. Add event in `AuthEvent`
+3. Add handler in `AuthBloc`
+4. Add UI button in `LoginScreen`
 
 ### Add User Data Storage
 1. Create new model in `models/`
 2. Create new service in `services/`
-3. Add state in provider
+3. Add events and states in bloc
 4. Update screens to display data
 
 ### Add New Screen
 1. Create screen file in `screens/`
 2. Add navigation logic
-3. Consume providers as needed
+3. Use BlocBuilder/BlocConsumer as needed
 4. Add to navigation flow
 
 ### Add Database Operations
 1. Create repository in `services/`
 2. Add methods for CRUD operations
-3. Add state management in providers
+3. Add events and states in blocs
 4. Update UI to reflect data
 
 ## Testing Strategy
@@ -319,7 +336,7 @@ Want to add features? Here's where to start:
 ### Unit Tests
 - Test models (serialization/deserialization)
 - Test service methods (mock Supabase)
-- Test provider state changes
+- Test bloc events and state transitions
 
 ### Widget Tests
 - Test individual screens
@@ -334,8 +351,8 @@ Want to add features? Here's where to start:
 
 ## Performance Considerations
 
-- **Lazy Loading**: Providers only created when needed
-- **Efficient Rebuilds**: Only affected widgets rebuild
+- **Lazy Loading**: Blocs only created when needed
+- **Efficient Rebuilds**: Only affected widgets rebuild with BlocBuilder
 - **Session Persistence**: Reduce auth checks with secure storage
 - **Image Caching**: Network images cached automatically
 

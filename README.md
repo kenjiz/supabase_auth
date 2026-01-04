@@ -7,7 +7,7 @@ A production-ready Flutter application demonstrating authentication with Supabas
 - ✅ **Google OAuth Sign-In**: Seamless authentication with Google accounts
 - ✅ **Session Persistence**: Automatic session restoration on app restart
 - ✅ **Clean Architecture**: Well-structured code with separation of concerns
-- ✅ **State Management**: Provider-based state management for auth state
+- ✅ **State Management**: flutter_bloc pattern for predictable state management
 - ✅ **User Profile**: Display user information with profile picture
 - ✅ **Error Handling**: Comprehensive error handling with user-friendly messages
 - ✅ **Deep Linking**: OAuth callback handling with deep links
@@ -30,8 +30,10 @@ lib/
 │   └── app_config.dart          # Environment configuration
 ├── models/
 │   └── user_profile.dart        # User profile model
-├── providers/
-│   └── auth_provider.dart       # Authentication state management
+├── bloc/
+│   ├── auth_bloc.dart           # Authentication business logic
+│   ├── auth_event.dart          # Authentication events
+│   └── auth_state.dart          # Authentication states
 ├── screens/
 │   ├── splash_screen.dart       # Initial loading screen
 │   ├── login_screen.dart        # Google Sign-In screen
@@ -164,9 +166,11 @@ flutter run --release
 
 ### State Management
 
-The app uses **Provider** for state management:
+The app uses **flutter_bloc** for state management:
 
-- `AuthProvider`: Manages authentication state, user profile, and loading states
+- `AuthBloc`: Central authentication logic handler
+- `AuthEvent`: Events for check status, sign in, sign out, and state changes
+- `AuthState`: States including authenticated, unauthenticated, loading, error states
 - Listeners automatically update UI when authentication state changes
 - Error handling provides user-friendly messages
 
@@ -248,7 +252,8 @@ flutter run --verbose
 - **supabase_flutter**: Supabase client for Flutter
 - **flutter_dotenv**: Environment variable management
 - **google_sign_in**: Google Sign-In (for enhanced functionality)
-- **provider**: State management solution
+- **flutter_bloc**: State management solution (BLoC pattern)
+- **equatable**: Value equality for Bloc states and events
 
 ## Additional Resources
 

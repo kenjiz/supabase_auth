@@ -6,10 +6,10 @@ A complete, production-ready Flutter authentication application using Supabase a
 
 ## Project Statistics
 
-- **Total Lines of Code**: ~925 lines of Dart code
+- **Total Lines of Code**: ~1050 lines of Dart code
 - **Screens**: 3 (Splash, Login, Home)
 - **Services**: 1 (AuthService)
-- **Providers**: 1 (AuthProvider)
+- **Blocs**: 1 (AuthBloc with events and states)
 - **Models**: 1 (UserProfile)
 - **Widgets**: 3 reusable dialog components
 - **Documentation Files**: 4 (README, SETUP_GUIDE, ARCHITECTURE, CONTRIBUTING)
@@ -26,7 +26,8 @@ A complete, production-ready Flutter authentication application using Supabase a
 - `supabase_flutter` (^2.8.0): Supabase client for Flutter
 - `flutter_dotenv` (^5.2.1): Environment variable management
 - `google_sign_in` (^6.2.2): Google Sign-In SDK
-- `provider` (^6.1.2): State management solution
+- `flutter_bloc` (^8.1.6): State management solution (BLoC pattern)
+- `equatable` (^2.0.5): Value equality for Bloc states and events
 
 ## Features Implemented
 
@@ -49,7 +50,7 @@ A complete, production-ready Flutter authentication application using Supabase a
 ### Architecture Features
 ✅ Clean architecture with separation of concerns  
 ✅ Service layer for business logic  
-✅ Provider-based state management  
+✅ flutter_bloc for state management  
 ✅ Reactive UI updates  
 ✅ Type-safe environment configuration  
 ✅ Proper error handling throughout  
@@ -103,12 +104,14 @@ supabase_auth/
     │   └── app_config.dart         # Configuration (25 lines)
     ├── models/
     │   └── user_profile.dart       # User model (38 lines)
-    ├── providers/
-    │   └── auth_provider.dart      # State management (123 lines)
+    ├── bloc/
+    │   ├── auth_bloc.dart          # Auth bloc (175 lines)
+    │   ├── auth_event.dart         # Auth events (50 lines)
+    │   └── auth_state.dart         # Auth states (67 lines)
     ├── screens/
-    │   ├── splash_screen.dart      # Splash screen (86 lines)
-    │   ├── login_screen.dart       # Login screen (163 lines)
-    │   └── home_screen.dart        # Profile screen (292 lines)
+    │   ├── splash_screen.dart      # Splash screen (90 lines)
+    │   ├── login_screen.dart       # Login screen (170 lines)
+    │   └── home_screen.dart        # Profile screen (245 lines)
     ├── services/
     │   └── auth_service.dart       # Auth service (79 lines)
     └── widgets/
@@ -200,7 +203,7 @@ All requirements from the problem statement have been successfully implemented:
 ✅ Supabase configuration with environment variables  
 ✅ Google Sign-In authentication  
 ✅ Session persistence across app restarts  
-✅ Authentication state management with Provider  
+✅ Authentication state management with flutter_bloc  
 ✅ Complete sign-out functionality  
 ✅ Auth state listener for real-time updates  
 ✅ Splash/loading screen  
