@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import '../providers/auth_provider.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../bloc/auth_bloc.dart';
+import '../bloc/auth_event.dart';
+import '../bloc/auth_state.dart';
 import 'login_screen.dart';
 import 'home_screen.dart';
 
@@ -26,59 +28,58 @@ class _SplashScreenState extends State<SplashScreen> {
     
     if (!mounted) return;
     
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    await authProvider.checkAuthStatus();
-    
-    if (!mounted) return;
-    
-    // Navigate based on authentication status
-    if (authProvider.isAuthenticated) {
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => const HomeScreen()),
-      );
-    } else {
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => const LoginScreen()),
-      );
-    }
+    context.read<AuthBloc>().add(const AuthCheckRequested());
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            // App logo or icon
-            Icon(
-              Icons.security,
-              size: 100,
-              color: Theme.of(context).primaryColor,
-            ),
-            const SizedBox(height: 24),
-            // App title
-            const Text(
-              'Supabase Auth',
-              style: TextStyle(
-                fontSize: 32,
-                fontWeight: FontWeight.bold,
-                color: Colors.black87,
+    return BlocListener<AuthBloc, AuthState>(
+      listener: (context, state) {
+        if (state is AuthAuthenticated) {
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (_) => const HomeScreen()),
+          );
+        } else if (state is AuthUnauthenticated) {
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (_) => const LoginScreen()),
+          );
+        }
+      },
+      child: Scaffold(
+        backgroundColor: Colors.white,
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // App logo or icon
+              Icon(
+                Icons.security,
+                size: 100,
+                color: Theme.of(context).primaryColor,
               ),
-            ),
-            const SizedBox(height: 16),
-            // Loading indicator
-            const CircularProgressIndicator(),
-            const SizedBox(height: 16),
-            const Text(
-              'Loading...',
-              style: TextStyle(
-                fontSize: 16,
-                color: Colors.black54,
+              const SizedBox(height: 24),
+              // App title
+              const Text(
+                'Supabase Auth',
+                style: TextStyle(
+                  fontSize: 32,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
               ),
-            ),
-          ],
+              const SizedBox(height: 16),
+              // Loading indicator
+              const CircularProgressIndicator(),
+              const SizedBox(height: 16),
+              const Text(
+                'Loading...',
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Colors.black54,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

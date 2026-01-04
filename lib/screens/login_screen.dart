@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import '../providers/auth_provider.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../bloc/auth_bloc.dart';
+import '../bloc/auth_event.dart';
+import '../bloc/auth_state.dart';
 import '../widgets/error_dialog.dart';
 import 'home_screen.dart';
 
@@ -9,26 +11,8 @@ class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key});
 
   /// Handle Google Sign-In
-  Future<void> _handleGoogleSignIn(BuildContext context) async {
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    final success = await authProvider.signInWithGoogle();
-    
-    if (!context.mounted) return;
-    
-    if (success) {
-      // OAuth flow initiated successfully
-      // The app will be redirected back after authentication
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Redirecting to Google Sign-In...'),
-          duration: Duration(seconds: 2),
-        ),
-      );
-    } else if (authProvider.errorMessage != null) {
-      // Show error dialog
-      showErrorDialog(context, authProvider.errorMessage!);
-      authProvider.clearError();
-    }
+  void _handleGoogleSignIn(BuildContext context) {
+    context.read<AuthBloc>().add(const AuthSignInWithGoogleRequested());
   }
 
   @override
@@ -36,17 +20,30 @@ class LoginScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
-        child: Consumer<AuthProvider>(
-          builder: (context, authProvider, child) {
-            // Listen for authentication state changes
-            if (authProvider.isAuthenticated) {
+        child: BlocConsumer<AuthBloc, AuthState>(
+          listener: (context, state) {
+            if (state is AuthAuthenticated) {
               // Navigate to home screen if authenticated
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                Navigator.of(context).pushReplacement(
-                  MaterialPageRoute(builder: (_) => const HomeScreen()),
-                );
-              });
+              Navigator.of(context).pushReplacement(
+                MaterialPageRoute(builder: (_) => const HomeScreen()),
+              );
+            } else if (state is AuthSigningIn) {
+              // Show snackbar when OAuth flow is initiated
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Redirecting to Google Sign-In...'),
+                  duration: Duration(seconds: 2),
+                ),
+              );
+            } else if (state is AuthError) {
+              // Show error dialog
+              showErrorDialog(context, state.message);
+              // Clear error after showing
+              context.read<AuthBloc>().add(const AuthErrorCleared());
             }
+          },
+          builder: (context, state) {
+            final isLoading = state is AuthSigningIn || state is AuthLoading;
 
             return Center(
               child: SingleChildScrollView(
@@ -91,7 +88,7 @@ class LoginScreen extends StatelessWidget {
                     const SizedBox(height: 48),
                     
                     // Google Sign-In button
-                    authProvider.isLoading
+                    isLoading
                         ? const CircularProgressIndicator()
                         : _GoogleSignInButton(
                             onPressed: () => _handleGoogleSignIn(context),

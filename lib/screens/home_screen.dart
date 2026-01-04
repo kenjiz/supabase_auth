@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import '../providers/auth_provider.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../bloc/auth_bloc.dart';
+import '../bloc/auth_event.dart';
+import '../bloc/auth_state.dart';
 import '../models/user_profile.dart';
 import 'login_screen.dart';
 
@@ -32,14 +34,7 @@ class HomeScreen extends StatelessWidget {
     );
 
     if (shouldSignOut == true && context.mounted) {
-      final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      await authProvider.signOut();
-      
-      if (context.mounted) {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => const LoginScreen()),
-        );
-      }
+      context.read<AuthBloc>().add(const AuthSignOutRequested());
     }
   }
 
@@ -51,19 +46,26 @@ class HomeScreen extends StatelessWidget {
         centerTitle: true,
         elevation: 0,
       ),
-      body: Consumer<AuthProvider>(
-        builder: (context, authProvider, child) {
-          final user = authProvider.currentUser;
-
-          if (user == null) {
-            // If no user, navigate to login
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              Navigator.of(context).pushReplacement(
-                MaterialPageRoute(builder: (_) => const LoginScreen()),
-              );
-            });
+      body: BlocConsumer<AuthBloc, AuthState>(
+        listener: (context, state) {
+          if (state is AuthUnauthenticated) {
+            // Navigate to login screen if signed out
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(builder: (_) => const LoginScreen()),
+            );
+          }
+        },
+        builder: (context, state) {
+          if (state is AuthLoading || state is AuthSigningOut) {
             return const Center(child: CircularProgressIndicator());
           }
+
+          if (state is! AuthAuthenticated) {
+            // If not authenticated, show loading
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          final user = state.user;
 
           return SingleChildScrollView(
             padding: const EdgeInsets.all(24.0),
@@ -150,30 +152,28 @@ class HomeScreen extends StatelessWidget {
                 const SizedBox(height: 32),
                 
                 // Sign out button
-                authProvider.isLoading
-                    ? const CircularProgressIndicator()
-                    : SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton.icon(
-                          onPressed: () => _handleSignOut(context),
-                          icon: const Icon(Icons.logout),
-                          label: const Text(
-                            'Sign Out',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          style: ElevatedButton.styleFrom(
-                            foregroundColor: Colors.white,
-                            backgroundColor: Colors.red,
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                          ),
-                        ),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: () => _handleSignOut(context),
+                    icon: const Icon(Icons.logout),
+                    label: const Text(
+                      'Sign Out',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
                       ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      foregroundColor: Colors.white,
+                      backgroundColor: Colors.red,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                  ),
+                ),
               ],
             ),
           );

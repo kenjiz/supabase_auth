@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'config/app_config.dart';
-import 'providers/auth_provider.dart';
+import 'bloc/auth_bloc.dart';
 import 'screens/splash_screen.dart';
 
 void main() async {
@@ -29,8 +29,8 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (_) => AuthProvider(),
+    return BlocProvider(
+      create: (_) => AuthBloc(),
       child: MaterialApp(
         title: 'Supabase Auth',
         debugShowCheckedModeBanner: false,
