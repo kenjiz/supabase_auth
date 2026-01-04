@@ -28,18 +28,28 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   void _initializeAuthListener() {
     _authStateSubscription = _authService.authStateChanges.listen(
       (authStateChange) {
-        final user = authStateChange.session?.user;
-        if (user != null) {
-          add(AuthStateChanged(
-            isAuthenticated: true,
-            userId: user.id,
-            email: user.email ?? '',
-            displayName: user.userMetadata?['full_name'] as String?,
-            photoUrl: user.userMetadata?['avatar_url'] as String?,
-          ));
-        } else {
-          add(const AuthStateChanged(isAuthenticated: false));
+        try {
+          final user = authStateChange.session?.user;
+          if (user != null) {
+            add(AuthStateChanged(
+              isAuthenticated: true,
+              userId: user.id,
+              email: user.email ?? '',
+              displayName: user.userMetadata?['full_name'] as String?,
+              photoUrl: user.userMetadata?['avatar_url'] as String?,
+            ));
+          } else {
+            add(const AuthStateChanged(isAuthenticated: false));
+          }
+        } catch (e) {
+          debugPrint('Error in auth state listener: $e');
+          // Don't add event if there's an error to prevent cascading issues
         }
+      },
+      onError: (error) {
+        debugPrint('Auth state listener error: $error');
+        // Emit error state if the stream itself fails
+        add(const AuthStateChanged(isAuthenticated: false));
       },
     );
   }
@@ -104,7 +114,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
           isAuthenticated: false,
         ));
       }
-      // Note: The actual authentication state will be updated via the auth state listener
+      // Note: On successful OAuth initiation, the user will be redirected to Google.
+      // After authentication, the Supabase auth state listener will automatically
+      // detect the session change and emit AuthAuthenticated state.
     } catch (e) {
       debugPrint('Error signing in with Google: $e');
       final errorMessage = _getErrorMessage(e);

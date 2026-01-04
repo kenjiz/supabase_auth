@@ -60,8 +60,26 @@ class HomeScreen extends StatelessWidget {
             return const Center(child: CircularProgressIndicator());
           }
 
+          if (state is AuthError) {
+            // Show error state with message
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.error_outline, size: 48, color: Colors.red),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Error: ${state.message}',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(color: Colors.red),
+                  ),
+                ],
+              ),
+            );
+          }
+
           if (state is! AuthAuthenticated) {
-            // If not authenticated, show loading
+            // For any other non-authenticated state, show loading
             return const Center(child: CircularProgressIndicator());
           }
 
