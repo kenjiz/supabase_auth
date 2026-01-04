@@ -1,5 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/user_profile.dart';
+import '../config/app_config.dart';
 
 /// Service class to handle all authentication operations with Supabase
 class AuthService {
@@ -33,7 +34,7 @@ class AuthService {
     try {
       final response = await _supabase.auth.signInWithOAuth(
         OAuthProvider.google,
-        redirectTo: 'io.supabase.flutterquickstart://login-callback/',
+        redirectTo: AppConfig.redirectUrl,
       );
       
       return response;

@@ -88,7 +88,7 @@ flutter pub get
 3. Add your Google OAuth Client ID and Client Secret (from Web application credentials)
 4. Add authorized redirect URLs:
    - `https://your-project.supabase.co/auth/v1/callback`
-   - `io.supabase.flutterquickstart://login-callback/`
+   - `com.example.supabase-auth://login-callback/`
 
 ### 5. Configure Environment Variables
 
@@ -103,7 +103,6 @@ cp .env.example .env
 ```env
 SUPABASE_URL=https://your-project.supabase.co
 SUPABASE_ANON_KEY=your-supabase-anon-key-here
-GOOGLE_WEB_CLIENT_ID=your-google-web-client-id.apps.googleusercontent.com
 ```
 
 **Important**: Never commit the `.env` file to version control. It's already in `.gitignore`.
@@ -174,8 +173,8 @@ The app uses **Provider** for state management:
 ### Deep Linking
 
 Deep links are configured for OAuth callbacks:
-- **Scheme**: `io.supabase.flutterquickstart`
-- **Callback URL**: `io.supabase.flutterquickstart://login-callback/`
+- **Scheme**: `com.example.supabase-auth`
+- **Callback URL**: `com.example.supabase-auth://login-callback/`
 
 Both Android and iOS are configured to handle these deep links.
 
@@ -185,7 +184,6 @@ Both Android and iOS are configured to handle these deep links.
 |----------|-------------|---------|
 | `SUPABASE_URL` | Your Supabase project URL | `https://xxxxx.supabase.co` |
 | `SUPABASE_ANON_KEY` | Your Supabase anonymous/public key | `eyJhbGc...` |
-| `GOOGLE_WEB_CLIENT_ID` | Google OAuth Web Client ID | `xxxxx.apps.googleusercontent.com` |
 
 ## Security Best Practices
 

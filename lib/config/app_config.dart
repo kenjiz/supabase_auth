@@ -8,8 +8,9 @@ class AppConfig {
   /// Supabase anonymous key from environment
   static String get supabaseAnonKey => dotenv.env['SUPABASE_ANON_KEY'] ?? '';
 
-  /// Google Web Client ID for OAuth
-  static String get googleWebClientId => dotenv.env['GOOGLE_WEB_CLIENT_ID'] ?? '';
+  /// OAuth redirect URL scheme
+  /// Uses the app's package identifier for deep linking
+  static const String redirectUrl = 'com.example.supabase-auth://login-callback/';
 
   /// Validate that all required configuration values are present
   static bool validate() {
@@ -18,9 +19,6 @@ class AppConfig {
     }
     if (supabaseAnonKey.isEmpty) {
       throw Exception('SUPABASE_ANON_KEY is not set in .env file');
-    }
-    if (googleWebClientId.isEmpty) {
-      throw Exception('GOOGLE_WEB_CLIENT_ID is not set in .env file');
     }
     return true;
   }

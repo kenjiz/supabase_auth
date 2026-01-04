@@ -34,7 +34,7 @@
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
                 <!-- Deep link URL scheme -->
-                <data android:scheme="io.supabase.flutterquickstart" />
+                <data android:scheme="com.example.supabase-auth" />
             </intent-filter>
         </activity>
         <!-- Don't delete the meta-data below.

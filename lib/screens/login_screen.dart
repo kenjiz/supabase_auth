@@ -132,14 +132,13 @@ class _GoogleSignInButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return ElevatedButton.icon(
       onPressed: onPressed,
-      icon: Image.asset(
-        'assets/google_logo.png',
-        height: 24,
-        width: 24,
-        errorBuilder: (context, error, stackTrace) {
-          // Fallback to icon if image not found
-          return const Icon(Icons.g_mobiledata, size: 24);
-        },
+      icon: Container(
+        padding: const EdgeInsets.all(4),
+        child: const Icon(
+          Icons.login,
+          size: 20,
+          color: Colors.blue,
+        ),
       ),
       label: const Text(
         'Sign in with Google',

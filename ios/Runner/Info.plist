@@ -54,7 +54,7 @@
 			<string>Editor</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
-				<string>io.supabase.flutterquickstart</string>
+				<string>com.example.supabase-auth</string>
 			</array>
 		</dict>
 	</array>
