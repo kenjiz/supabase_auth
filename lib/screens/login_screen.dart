@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../bloc/auth_bloc.dart';
-import '../bloc/auth_event.dart';
+import '../bloc/auth_cubit.dart';
 import '../bloc/auth_state.dart';
 import '../widgets/error_dialog.dart';
 import 'home_screen.dart';
@@ -12,7 +11,7 @@ class LoginScreen extends StatelessWidget {
 
   /// Handle Google Sign-In
   void _handleGoogleSignIn(BuildContext context) {
-    context.read<AuthBloc>().add(const AuthSignInWithGoogleRequested());
+    context.read<AuthCubit>().signInWithGoogle();
   }
 
   @override
@@ -20,14 +19,14 @@ class LoginScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
-        child: BlocConsumer<AuthBloc, AuthState>(
+        child: BlocConsumer<AuthCubit, AuthState>(
           listener: (context, state) {
-            if (state is AuthAuthenticated) {
+            if (state.isAuthenticated) {
               // Navigate to home screen if authenticated
               Navigator.of(context).pushReplacement(
                 MaterialPageRoute(builder: (_) => const HomeScreen()),
               );
-            } else if (state is AuthSigningIn) {
+            } else if (state.isSigningIn) {
               // Show snackbar when OAuth flow is initiated
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
@@ -35,15 +34,15 @@ class LoginScreen extends StatelessWidget {
                   duration: Duration(seconds: 2),
                 ),
               );
-            } else if (state is AuthError) {
+            } else if (state.hasError && state.errorMessage != null) {
               // Show error dialog
-              showErrorDialog(context, state.message);
+              showErrorDialog(context, state.errorMessage!);
               // Clear error after showing
-              context.read<AuthBloc>().add(const AuthErrorCleared());
+              context.read<AuthCubit>().clearError();
             }
           },
           builder: (context, state) {
-            final isLoading = state is AuthSigningIn || state is AuthLoading;
+            final isLoading = state.isSigningIn || state.isLoading;
 
             return Center(
               child: SingleChildScrollView(

@@ -4,24 +4,16 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/user_profile.dart';
 import '../services/auth_service.dart';
-import 'auth_event.dart';
 import 'auth_state.dart';
 
-/// Bloc to manage authentication state and events
-class AuthBloc extends Bloc<AuthEvent, AuthState> {
+/// Cubit to manage authentication state
+class AuthCubit extends Cubit<AuthState> {
   final AuthService _authService = AuthService();
   StreamSubscription<AuthState>? _authStateSubscription;
 
-  AuthBloc() : super(const AuthInitial()) {
+  AuthCubit() : super(const AuthState.initial()) {
     // Initialize auth state listener
     _initializeAuthListener();
-
-    // Register event handlers
-    on<AuthCheckRequested>(_onAuthCheckRequested);
-    on<AuthStateChanged>(_onAuthStateChanged);
-    on<AuthSignInWithGoogleRequested>(_onSignInWithGoogleRequested);
-    on<AuthSignOutRequested>(_onSignOutRequested);
-    on<AuthErrorCleared>(_onErrorCleared);
   }
 
   /// Initialize authentication state listener from Supabase
@@ -31,141 +23,98 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         try {
           final user = authStateChange.session?.user;
           if (user != null) {
-            add(AuthStateChanged(
-              isAuthenticated: true,
-              userId: user.id,
+            final userProfile = UserProfile(
+              id: user.id,
               email: user.email ?? '',
               displayName: user.userMetadata?['full_name'] as String?,
               photoUrl: user.userMetadata?['avatar_url'] as String?,
-            ));
+            );
+            emit(AuthState.authenticated(userProfile));
           } else {
-            add(const AuthStateChanged(isAuthenticated: false));
+            emit(const AuthState.unauthenticated());
           }
         } catch (e) {
           debugPrint('Error in auth state listener: $e');
-          // Don't add event if there's an error to prevent cascading issues
+          // Don't emit if there's an error to prevent cascading issues
         }
       },
       onError: (error) {
         debugPrint('Auth state listener error: $error');
-        // Emit error state if the stream itself fails
-        add(const AuthStateChanged(isAuthenticated: false));
+        emit(const AuthState.unauthenticated());
       },
     );
   }
 
-  /// Handle authentication status check
-  Future<void> _onAuthCheckRequested(
-    AuthCheckRequested event,
-    Emitter<AuthState> emit,
-  ) async {
-    emit(const AuthLoading());
+  /// Check current authentication status
+  Future<void> checkAuthStatus() async {
+    emit(const AuthState.loading());
 
     try {
       if (_authService.isAuthenticated()) {
         final userProfile = _authService.currentUserProfile;
         if (userProfile != null) {
-          emit(AuthAuthenticated(userProfile));
+          emit(AuthState.authenticated(userProfile));
         } else {
-          emit(const AuthUnauthenticated());
+          emit(const AuthState.unauthenticated());
         }
       } else {
-        emit(const AuthUnauthenticated());
+        emit(const AuthState.unauthenticated());
       }
     } catch (e) {
       debugPrint('Error checking auth status: $e');
-      emit(const AuthError(
-        message: 'Failed to check authentication status',
-        isAuthenticated: false,
-      ));
+      emit(const AuthState.error('Failed to check authentication status'));
     }
   }
 
-  /// Handle authentication state changes from Supabase listener
-  void _onAuthStateChanged(
-    AuthStateChanged event,
-    Emitter<AuthState> emit,
-  ) {
-    if (event.isAuthenticated && event.userId != null && event.email != null) {
-      final user = UserProfile(
-        id: event.userId!,
-        email: event.email!,
-        displayName: event.displayName,
-        photoUrl: event.photoUrl,
-      );
-      emit(AuthAuthenticated(user));
-    } else {
-      emit(const AuthUnauthenticated());
-    }
-  }
-
-  /// Handle Google Sign-In request
-  Future<void> _onSignInWithGoogleRequested(
-    AuthSignInWithGoogleRequested event,
-    Emitter<AuthState> emit,
-  ) async {
-    emit(const AuthSigningIn());
+  /// Sign in with Google
+  Future<void> signInWithGoogle() async {
+    emit(const AuthState.signingIn());
 
     try {
       final success = await _authService.signInWithGoogle();
       if (!success) {
-        emit(const AuthError(
-          message: 'Failed to initiate Google Sign-In',
-          isAuthenticated: false,
-        ));
+        emit(const AuthState.error('Failed to initiate Google Sign-In'));
       }
       // Note: On successful OAuth initiation, the user will be redirected to Google.
       // After authentication, the Supabase auth state listener will automatically
-      // detect the session change and emit AuthAuthenticated state.
+      // detect the session change and emit authenticated state.
     } catch (e) {
       debugPrint('Error signing in with Google: $e');
       final errorMessage = _getErrorMessage(e);
-      emit(AuthError(
-        message: errorMessage,
-        isAuthenticated: false,
-      ));
+      emit(AuthState.error(errorMessage));
     }
   }
 
-  /// Handle sign-out request
-  Future<void> _onSignOutRequested(
-    AuthSignOutRequested event,
-    Emitter<AuthState> emit,
-  ) async {
-    // Get current user before signing out for loading state
+  /// Sign out the current user
+  Future<void> signOut() async {
     final currentUser = _authService.currentUserProfile;
     if (currentUser != null) {
-      emit(AuthSigningOut(currentUser));
+      emit(AuthState.signingOut(currentUser));
     }
 
     try {
       await _authService.signOut();
-      emit(const AuthUnauthenticated());
+      emit(const AuthState.unauthenticated());
     } catch (e) {
       debugPrint('Error signing out: $e');
-      emit(AuthError(
-        message: 'Failed to sign out. Please try again.',
-        isAuthenticated: currentUser != null,
+      emit(AuthState.error(
+        'Failed to sign out. Please try again.',
         user: currentUser,
       ));
     }
   }
 
-  /// Handle error cleared
-  void _onErrorCleared(
-    AuthErrorCleared event,
-    Emitter<AuthState> emit,
-  ) {
-    // Check current authentication status
+  /// Clear error and return to appropriate state
+  void clearError() {
     if (_authService.isAuthenticated()) {
       final userProfile = _authService.currentUserProfile;
       if (userProfile != null) {
-        emit(AuthAuthenticated(userProfile));
+        emit(AuthState.authenticated(userProfile));
       } else {
-        emit(const AuthUnauthenticated());
+        emit(const AuthState.unauthenticated());
       }
     } else {
-      emit(const AuthUnauthenticated());
+      emit(const AuthState.unauthenticated());
     }
   }
 

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../bloc/auth_bloc.dart';
-import '../bloc/auth_event.dart';
+import '../bloc/auth_cubit.dart';
 import '../bloc/auth_state.dart';
 import '../models/user_profile.dart';
 import 'login_screen.dart';
@@ -34,7 +33,7 @@ class HomeScreen extends StatelessWidget {
     );
 
     if (shouldSignOut == true && context.mounted) {
-      context.read<AuthBloc>().add(const AuthSignOutRequested());
+      context.read<AuthCubit>().signOut();
     }
   }
 
@@ -46,9 +45,9 @@ class HomeScreen extends StatelessWidget {
         centerTitle: true,
         elevation: 0,
       ),
-      body: BlocConsumer<AuthBloc, AuthState>(
+      body: BlocConsumer<AuthCubit, AuthState>(
         listener: (context, state) {
-          if (state is AuthUnauthenticated) {
+          if (state.status == AuthStatus.unauthenticated) {
             // Navigate to login screen if signed out
             Navigator.of(context).pushReplacement(
               MaterialPageRoute(builder: (_) => const LoginScreen()),
@@ -56,11 +55,11 @@ class HomeScreen extends StatelessWidget {
           }
         },
         builder: (context, state) {
-          if (state is AuthLoading || state is AuthSigningOut) {
+          if (state.isLoading || state.isSigningOut) {
             return const Center(child: CircularProgressIndicator());
           }
 
-          if (state is AuthError) {
+          if (state.hasError) {
             // Show error state with message
             return Center(
               child: Column(
@@ -69,7 +68,7 @@ class HomeScreen extends StatelessWidget {
                   const Icon(Icons.error_outline, size: 48, color: Colors.red),
                   const SizedBox(height: 16),
                   Text(
-                    'Error: ${state.message}',
+                    'Error: ${state.errorMessage}',
                     textAlign: TextAlign.center,
                     style: const TextStyle(color: Colors.red),
                   ),
@@ -78,12 +77,12 @@ class HomeScreen extends StatelessWidget {
             );
           }
 
-          if (state is! AuthAuthenticated) {
+          if (!state.isAuthenticated || state.user == null) {
             // For any other non-authenticated state, show loading
             return const Center(child: CircularProgressIndicator());
           }
 
-          final user = state.user;
+          final user = state.user!;
 
           return SingleChildScrollView(
             padding: const EdgeInsets.all(24.0),

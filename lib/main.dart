@@ -3,7 +3,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'config/app_config.dart';
-import 'bloc/auth_bloc.dart';
+import 'bloc/auth_cubit.dart';
 import 'screens/splash_screen.dart';
 
 void main() async {
@@ -30,7 +30,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) => AuthBloc(),
+      create: (_) => AuthCubit(),
       child: MaterialApp(
         title: 'Supabase Auth',
         debugShowCheckedModeBanner: false,

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../bloc/auth_bloc.dart';
-import '../bloc/auth_event.dart';
+import '../bloc/auth_cubit.dart';
 import '../bloc/auth_state.dart';
 import 'login_screen.dart';
 import 'home_screen.dart';
@@ -28,18 +27,18 @@ class _SplashScreenState extends State<SplashScreen> {
     
     if (!mounted) return;
     
-    context.read<AuthBloc>().add(const AuthCheckRequested());
+    context.read<AuthCubit>().checkAuthStatus();
   }
 
   @override
   Widget build(BuildContext context) {
-    return BlocListener<AuthBloc, AuthState>(
+    return BlocListener<AuthCubit, AuthState>(
       listener: (context, state) {
-        if (state is AuthAuthenticated) {
+        if (state.isAuthenticated) {
           Navigator.of(context).pushReplacement(
             MaterialPageRoute(builder: (_) => const HomeScreen()),
           );
-        } else if (state is AuthUnauthenticated) {
+        } else if (state.status == AuthStatus.unauthenticated) {
           Navigator.of(context).pushReplacement(
             MaterialPageRoute(builder: (_) => const LoginScreen()),
           );

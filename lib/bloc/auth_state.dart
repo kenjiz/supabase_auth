@@ -1,66 +1,87 @@
 import 'package:equatable/equatable.dart';
 import '../models/user_profile.dart';
 
-/// Base class for all authentication states
-abstract class AuthState extends Equatable {
-  const AuthState();
-
-  @override
-  List<Object?> get props => [];
+/// Authentication status enum
+enum AuthStatus {
+  initial,
+  loading,
+  authenticated,
+  unauthenticated,
+  signingIn,
+  signingOut,
+  error,
 }
 
-/// Initial state when the app starts
-class AuthInitial extends AuthState {
-  const AuthInitial();
-}
-
-/// State when checking authentication status
-class AuthLoading extends AuthState {
-  const AuthLoading();
-}
-
-/// State when user is authenticated
-class AuthAuthenticated extends AuthState {
-  final UserProfile user;
-
-  const AuthAuthenticated(this.user);
-
-  @override
-  List<Object?> get props => [user];
-}
-
-/// State when user is not authenticated
-class AuthUnauthenticated extends AuthState {
-  const AuthUnauthenticated();
-}
-
-/// State when an error occurs
-class AuthError extends AuthState {
-  final String message;
-  final bool isAuthenticated;
+/// Single state class for authentication
+class AuthState extends Equatable {
+  final AuthStatus status;
   final UserProfile? user;
+  final String? errorMessage;
 
-  const AuthError({
-    required this.message,
-    this.isAuthenticated = false,
+  const AuthState({
+    required this.status,
     this.user,
+    this.errorMessage,
   });
 
+  /// Initial state
+  const AuthState.initial()
+      : status = AuthStatus.initial,
+        user = null,
+        errorMessage = null;
+
+  /// Loading state
+  const AuthState.loading()
+      : status = AuthStatus.loading,
+        user = null,
+        errorMessage = null;
+
+  /// Authenticated state
+  const AuthState.authenticated(UserProfile this.user)
+      : status = AuthStatus.authenticated,
+        errorMessage = null;
+
+  /// Unauthenticated state
+  const AuthState.unauthenticated()
+      : status = AuthStatus.unauthenticated,
+        user = null,
+        errorMessage = null;
+
+  /// Signing in state
+  const AuthState.signingIn()
+      : status = AuthStatus.signingIn,
+        user = null,
+        errorMessage = null;
+
+  /// Signing out state
+  AuthState.signingOut(UserProfile this.user)
+      : status = AuthStatus.signingOut,
+        errorMessage = null;
+
+  /// Error state
+  const AuthState.error(String this.errorMessage, {this.user})
+      : status = AuthStatus.error;
+
+  /// Convenience getters
+  bool get isAuthenticated => status == AuthStatus.authenticated;
+  bool get isLoading => status == AuthStatus.loading;
+  bool get isSigningIn => status == AuthStatus.signingIn;
+  bool get isSigningOut => status == AuthStatus.signingOut;
+  bool get hasError => status == AuthStatus.error;
+
   @override
-  List<Object?> get props => [message, isAuthenticated, user];
-}
+  List<Object?> get props => [status, user, errorMessage];
 
-/// State when sign-in is in progress
-class AuthSigningIn extends AuthState {
-  const AuthSigningIn();
-}
-
-/// State when sign-out is in progress
-class AuthSigningOut extends AuthState {
-  final UserProfile user;
-
-  const AuthSigningOut(this.user);
-
-  @override
-  List<Object?> get props => [user];
+  /// CopyWith method for creating new states
+  AuthState copyWith({
+    AuthStatus? status,
+    UserProfile? user,
+    String? errorMessage,
+  }) {
+    return AuthState(
+      status: status ?? this.status,
+      user: user ?? this.user,
+      errorMessage: errorMessage ?? this.errorMessage,
+    );
+  }
 }
